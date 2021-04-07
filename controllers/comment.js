@@ -105,6 +105,7 @@ exports.addComment = async (req, res, next) => {
 exports.deleteComment = async (req, res, next) => {
   const pId = req.body.pId;
   const commentId = req.body.commentId;
+  console.log("ids", pId, commentId);
 
   try {
     await Comment.findByIdAndUpdate(pId, {
@@ -128,13 +129,14 @@ exports.addReply = async (req, res, next) => {
   const reply = req.body.reply;
 
   try {
-    const rpl = await Comment.updateOne({
-      comments: { $elemMatch: { _id: mongoose.Types.ObjectId(commentId) } },
-      $push: { "comments.$.replies": reply },
-    });
+    await Comment.updateOne(
+      {comments: { $elemMatch: { _id: commentId } }},
+      {$push: { "comments.$.replies": reply }},
+    );
+    const commentsData = await Comment.findById(pId).select("comments");
     res.status(201).json({
       message: "Comment added!",
-      data: rpl,
+      data: commentsData,
     });
   } catch (error) {
     if (!error.statusCode) {
